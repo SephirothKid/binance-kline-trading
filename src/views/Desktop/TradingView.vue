@@ -185,6 +185,7 @@
 
 <script>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import PriceInfo from '@/components/PriceInfo.vue'
 // import KLineChart from '@/components/KLineChart.vue'
 import DesktopKLineChart from '@/components/DesktopKLineChart.vue'
@@ -201,6 +202,7 @@ export default {
     TimeframeSelector
   },
   setup() {
+    const router = useRouter()
     const currentSymbol = ref('BTCUSDT')
     const selectedInterval = ref('1m')
     const searchQuery = ref('')
@@ -442,7 +444,34 @@ export default {
       })
     }
 
+    // 检查是否应该重定向到移动端
+    const checkForMobileRedirect = () => {
+      const screenWidth = window.innerWidth
+      const userAgent = navigator.userAgent.toLowerCase()
+
+      // 检查屏幕宽度（小于等于768px认为是移动端）
+      const isMobileWidth = screenWidth <= 768
+
+      // 检查UA（是移动设备）
+      const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
+
+      // 如果屏幕宽度小于等于768px或者是移动设备UA，重定向到移动端
+      if (isMobileWidth || isMobileUA) {
+        router.push('/mobile')
+      }
+    }
+
+    // 窗口大小变化监听
+    const handleResize = () => {
+      checkForMobileRedirect()
+    }
+
     onMounted(() => {
+      // 初始检查是否需要重定向
+      checkForMobileRedirect()
+
+      // 添加窗口大小变化监听
+      window.addEventListener('resize', handleResize)
       load24hrStats()
 
       // 启动币对列表WebSocket连接
@@ -453,6 +482,9 @@ export default {
     })
 
     onUnmounted(() => {
+      // 清理事件监听
+      window.removeEventListener('resize', handleResize)
+
       // 断开币对列表WebSocket连接
       disconnectTickerWebSocket()
     })

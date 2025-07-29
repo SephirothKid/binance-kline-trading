@@ -1,7 +1,7 @@
 <template>
   <div class="mobile-trading-view min-h-screen bg-trading-bg">
-    <!-- 顶部导航栏 -->
-    <div class="trading-card p-4 flex items-center justify-between">
+    <!-- 顶部导航栏 - 固定定位 -->
+    <div class="fixed top-0 left-0 right-0 z-50 trading-card p-4 flex items-center justify-between bg-trading-bg">
       <button class="text-trading-text">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -24,42 +24,36 @@
       </div>
     </div>
 
-    <!-- 价格信息 -->
-    <div class="px-4 py-2">
-      <div class="text-3xl font-bold font-mono mb-1" :class="priceChangeClass">
+    <!-- 内容区域 - 添加顶部间距避免被固定HeaderBar遮挡 -->
+    <div class="pt-20">
+      <!-- 价格信息 -->
+      <div class="px-4 py-2">
+      <div class="text-2xl font-bold font-mono mb-1" :class="priceChangeClass">
         {{ formatPrice(stats.lastPrice) }}
       </div>
-      <div class="text-sm text-trading-text-secondary mb-2">
+      <div class="text-xs text-trading-text-secondary mb-3">
         ¥{{ formatPrice(stats.lastPrice * 7.2) }}
+        <span :class="priceChangeClass">{{ formatPercent(stats.priceChangePercent) }}</span>
       </div>
-      
-      <div class="flex items-center space-x-4 text-sm">
-        <div>
-          <span class="text-trading-text-secondary">24h变化</span>
-          <div class="font-mono" :class="priceChangeClass">
-            {{ formatChange(stats.priceChange) }} ({{ formatPercent(stats.priceChangePercent) }})
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- 24小时统计 -->
-    <div class="grid grid-cols-2 gap-4 px-4 py-2 text-sm">
-      <div>
-        <div class="text-trading-text-secondary">24h最高</div>
-        <div class="font-mono text-trading-text">{{ formatPrice(stats.highPrice) }}</div>
-      </div>
-      <div>
-        <div class="text-trading-text-secondary">24h最低</div>
-        <div class="font-mono text-trading-text">{{ formatPrice(stats.lowPrice) }}</div>
-      </div>
-      <div>
-        <div class="text-trading-text-secondary">24h成交量(BTC)</div>
-        <div class="font-mono text-trading-text">{{ formatVolume(stats.volume) }}</div>
-      </div>
-      <div>
-        <div class="text-trading-text-secondary">24h成交额(USDT)</div>
-        <div class="font-mono text-trading-text">{{ formatVolume(stats.quoteVolume) }}</div>
+      <!-- 24小时统计信息 - 紧凑布局 -->
+      <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+        <div>
+          <div class="text-trading-text-secondary">24h最高价</div>
+          <div class="font-mono text-trading-text">{{ formatPrice(stats.highPrice) }}</div>
+        </div>
+        <div>
+          <div class="text-trading-text-secondary">24h成交量(BTC)</div>
+          <div class="font-mono text-trading-text">{{ formatVolume(stats.volume) }}</div>
+        </div>
+        <div>
+          <div class="text-trading-text-secondary">24h最低价</div>
+          <div class="font-mono text-trading-text">{{ formatPrice(stats.lowPrice) }}</div>
+        </div>
+        <div>
+          <div class="text-trading-text-secondary">24h成交量(USDT)</div>
+          <div class="font-mono text-trading-text">{{ formatVolume(stats.quoteVolume) }}</div>
+        </div>
       </div>
     </div>
 
@@ -83,9 +77,13 @@
     </div>
 
     <!-- K线图 -->
-    <!-- <div class="mx-4 mb-4 trading-card">
-      <SimpleKLineChart />
-    </div> -->
+    <div class="mx-4 mb-4 trading-card" style="height: 400px;">
+      <KLineChart
+        :symbol="currentSymbol"
+        :interval="selectedInterval"
+        :height="400"
+      />
+    </div>
 
     <!-- 技术指标快速选择 -->
     <div class="px-4 py-2">
@@ -118,28 +116,13 @@
         </button>
       </div>
     </div>
-
-    <!-- 提示用户切换到PC端 -->
-    <div class="px-4 py-2 mb-20">
-      <div class="trading-card p-3 text-center">
-        <div class="text-sm text-trading-text-secondary mb-2">
-          获得更好的交易体验
-        </div>
-        <button 
-          @click="switchToDesktop"
-          class="trading-button trading-button-primary text-sm"
-        >
-          切换到PC端
-        </button>
-      </div>
-    </div>
+    </div> <!-- 内容区域结束 -->
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-// import SimpleKLineChart from '@/components/SimpleKLineChart.vue'
 import KLineChart from '@/components/KLineChart.vue'
 import { chartEventBus } from '@/utils/chartEventBus'
 import SymbolSelector from '@/components/SymbolSelector.vue'
@@ -185,7 +168,7 @@ export default {
       { label: '日线', value: '1d' }
     ]
 
-    const quickIndicators = ['MA', 'BOLL', 'MACD', 'RSI']
+    const quickIndicators = ['MA', 'EMA', 'WMA', 'BOLL', 'VWAP', 'AVL', 'TRIX', 'SAR']
 
     const formatPrice = (price) => {
       if (!price) return '0.00'
@@ -229,10 +212,6 @@ export default {
       chartEventBus.toggleIndicator(indicator)
     }
 
-    const switchToDesktop = () => {
-      router.push('/desktop')
-    }
-
     const load24hrStats = async () => {
       try {
         const data = await binanceApi.get24hrStats(currentSymbol.value)
@@ -253,9 +232,42 @@ export default {
       load24hrStats()
     }
 
+    // 检查是否应该重定向到桌面端
+    const checkForDesktopRedirect = () => {
+      const screenWidth = window.innerWidth
+      const userAgent = navigator.userAgent.toLowerCase()
+
+      // 检查屏幕宽度（大于768px认为是桌面端）
+      const isDesktopWidth = screenWidth > 768
+
+      // 检查UA（不是移动设备）
+      const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
+
+      // 如果屏幕宽度大于768px或者不是移动设备UA，重定向到桌面端
+      if (isDesktopWidth || !isMobileUA) {
+        router.push('/desktop')
+      }
+    }
+
+    // 窗口大小变化监听
+    const handleResize = () => {
+      checkForDesktopRedirect()
+    }
+
     onMounted(() => {
+      // 初始检查是否需要重定向
+      checkForDesktopRedirect()
+
+      // 添加窗口大小变化监听
+      window.addEventListener('resize', handleResize)
+
       load24hrStats()
       setInterval(load24hrStats, 60000)
+    })
+
+    onUnmounted(() => {
+      // 清理事件监听
+      window.removeEventListener('resize', handleResize)
     })
 
     return {
@@ -273,7 +285,6 @@ export default {
       formatVolume,
       selectTimeframe,
       toggleIndicator,
-      switchToDesktop,
       handlePriceUpdate,
       handleSymbolChange
     }
