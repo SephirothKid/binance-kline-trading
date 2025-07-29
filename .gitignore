@@ -1,0 +1,47 @@
+# Node.js / npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local
+.env.*.local
+
+# Build outputs
+/dist
+/build
+/out
+
+# Logs
+logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Vue.js specific
+.vuepress/dist
+.nuxt
+.vue-cache
+
+# Testing
+coverage/
+*.lcov
+
+# Miscellaneous
+*.min.js
+*.min.css
+
+Todo.md
