@@ -1,7 +1,7 @@
 {
   "name": "binance-kline-trading",
   "version": "1.0.0",
-  "description": "币安风格的K线图交易页面",
+  "description": "币安风格的K线图",
   "type": "module",
   "scripts": {
     "dev": "vite",
