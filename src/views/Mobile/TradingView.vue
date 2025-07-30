@@ -1,64 +1,57 @@
 <template>
   <div class="mobile-trading-view min-h-screen bg-trading-bg">
-    <!-- 顶部导航栏 - 固定定位 -->
+    <!-- 顶部导航栏 -->
     <div class="fixed top-0 left-0 right-0 z-50 trading-card p-4 flex items-center justify-between bg-trading-bg">
-      <button class="text-trading-text">
+      <!-- <button class="text-trading-text">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
-      </button>
+      </button> -->
       
       <SymbolSelector v-model="currentSymbol" @update:modelValue="handleSymbolChange" />
 
-      <div class="flex items-center space-x-2">
-        <button class="text-trading-text-secondary">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
-          </svg>
-        </button>
-        <button class="text-trading-text-secondary">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-          </svg>
-        </button>
-      </div>
+      
     </div>
 
-    <!-- 内容区域 - 添加顶部间距避免被固定HeaderBar遮挡 -->
+    <!-- 内容区域 -->
     <div class="pt-20">
-      <!-- 价格信息 -->
-      <div class="px-4 py-2">
-      <div class="text-2xl font-bold font-mono mb-1" :class="priceChangeClass">
-        {{ formatPrice(stats.lastPrice) }}
-      </div>
-      <div class="text-xs text-trading-text-secondary mb-3">
-        ¥{{ formatPrice(stats.lastPrice * 7.2) }}
-        <span :class="priceChangeClass">{{ formatPercent(stats.priceChangePercent) }}</span>
-      </div>
+      <!-- 价格信息和统计信息 -->
+      <div class="px-4 py-2 flex">
+        
+        <div class="flex-1">
+          <div class="text-2xl font-bold font-mono mb-1" :class="priceChangeClass">
+            {{ formatPrice(stats.lastPrice) }}
+          </div>
+          <div class="text-xs text-trading-text-secondary mb-1">
+            ¥{{ formatPrice(stats.lastPrice * 7.2) }}
+            <span :class="priceChangeClass">{{ formatPercent(stats.priceChangePercent) }}</span>
+          </div>
+        </div>
 
-      <!-- 24小时统计信息 - 紧凑布局 -->
-      <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
-        <div>
-          <div class="text-trading-text-secondary">24h最高价</div>
-          <div class="font-mono text-trading-text">{{ formatPrice(stats.highPrice) }}</div>
-        </div>
-        <div>
-          <div class="text-trading-text-secondary">24h成交量(BTC)</div>
-          <div class="font-mono text-trading-text">{{ formatVolume(stats.volume) }}</div>
-        </div>
-        <div>
-          <div class="text-trading-text-secondary">24h最低价</div>
-          <div class="font-mono text-trading-text">{{ formatPrice(stats.lowPrice) }}</div>
-        </div>
-        <div>
-          <div class="text-trading-text-secondary">24h成交量(USDT)</div>
-          <div class="font-mono text-trading-text">{{ formatVolume(stats.quoteVolume) }}</div>
+        <div class="flex-1">
+          <div class="grid grid-cols-2 gap-x-1 gap-y-1">
+            <div>
+              <div class="text-trading-text-secondary" style="font-size: 10px;">24h高</div>
+              <div class="font-mono text-trading-text" style="font-size: 10px;">{{ formatPrice(stats.highPrice) }}</div>
+            </div>
+            <div>
+              <div class="text-trading-text-secondary" style="font-size: 10px;">成交量(ETH)</div>
+              <div class="font-mono text-trading-text" style="font-size: 10px;">{{ formatVolume(stats.volume) }}</div>
+            </div>
+            <div>
+              <div class="text-trading-text-secondary" style="font-size: 10px;">24h低</div>
+              <div class="font-mono text-trading-text" style="font-size: 10px;">{{ formatPrice(stats.lowPrice) }}</div>
+            </div>
+            <div>
+              <div class="text-trading-text-secondary" style="font-size: 10px;">成交额(USDT)</div>
+              <div class="font-mono text-trading-text" style="font-size: 10px;">{{ formatVolume(stats.quoteVolume) }}</div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
     <!-- 时间周期选择 -->
-    <div class="px-4 py-2">
+    <div class="px-2 py-2">
       <div class="flex items-center space-x-1 overflow-x-auto">
         <button
           v-for="timeframe in mobileTimeframes"
@@ -77,7 +70,7 @@
     </div>
 
     <!-- K线图 -->
-    <div class="mx-4 mb-4 trading-card" style="height: 400px;">
+    <div class="mx-2 mb-4 trading-card" style="height: 400px;">
       <KLineChart
         :symbol="currentSymbol"
         :interval="selectedInterval"
@@ -86,16 +79,16 @@
     </div>
 
     <!-- 技术指标快速选择 -->
-    <div class="px-4 py-2">
+    <div class="px-4 py-2 overflow-x-auto">
       <div class="flex items-center space-x-2 text-xs">
-        <span class="text-trading-text-secondary">指标:</span>
+        <span class="text-trading-text-secondary whitespace-nowrap">指标:</span>
         <button
           v-for="indicator in quickIndicators"
           :key="indicator"
           :class="[
             'px-2 py-1 rounded transition-colors duration-200',
             activeIndicators.includes(indicator)
-              ? 'bg-trading-border text-trading-text'
+              ? 'text-trading-text'
               : 'text-trading-text-secondary'
           ]"
           @click="toggleIndicator(indicator)"
@@ -106,7 +99,7 @@
     </div>
 
     <!-- 底部操作区域 -->
-    <div class="fixed bottom-0 left-0 right-0 bg-trading-card border-t border-trading-border p-4">
+    <div class="fixed bottom-0 left-0 right-0 bg-trading-card border-t border-trading-border p-4 z-50">
       <div class="flex items-center space-x-3">
         <button class="trading-button trading-button-success flex-1 py-3 text-base font-medium">
           买入
@@ -137,7 +130,7 @@ export default {
   setup() {
     const router = useRouter()
     const currentSymbol = ref('BTCUSDT')
-    const selectedInterval = ref('1m')
+    const selectedInterval = ref('3m')
     const stats = ref({
       lastPrice: 0,
       priceChange: 0,
@@ -161,9 +154,11 @@ export default {
     })
 
     const mobileTimeframes = [
+      // { label: '分时', value: '1m' },
       { label: '3分', value: '3m' },
       { label: '5分', value: '5m' },
       { label: '15分', value: '15m' },
+      { label: '30分', value: '30m' },
       { label: '1小时', value: '1h' },
       { label: '日线', value: '1d' }
     ]

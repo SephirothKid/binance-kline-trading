@@ -6,9 +6,6 @@
       class="flex items-center space-x-2 px-3 py-2 rounded hover:bg-trading-border transition-colors duration-200"
     >
       <div class="flex items-center space-x-1">
-        <div class="w-6 h-6 rounded-full bg-trading-yellow flex items-center justify-center text-black text-xs font-bold">
-          {{ selectedSymbol.split('USDT')[0].charAt(0) }}
-        </div>
         <span class="font-medium text-trading-text">{{ formatSymbol(selectedSymbol) }}</span>
       </div>
       <svg 
@@ -51,9 +48,6 @@
           class="flex items-center justify-between px-3 py-2 hover:bg-trading-border cursor-pointer transition-colors duration-200"
         >
           <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 rounded-full bg-trading-yellow flex items-center justify-center text-black text-sm font-bold">
-              {{ symbol.symbol.split('USDT')[0].charAt(0) }}
-            </div>
             <div>
               <div class="font-medium text-trading-text">{{ formatSymbol(symbol.symbol) }}</div>
               <div class="text-xs text-trading-text-secondary">{{ symbol.name }}</div>

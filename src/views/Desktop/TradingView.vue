@@ -204,7 +204,7 @@ export default {
   setup() {
     const router = useRouter()
     const currentSymbol = ref('BTCUSDT')
-    const selectedInterval = ref('1m')
+    const selectedInterval = ref('3m')
     const searchQuery = ref('')
     const selectedFilter = ref('收藏')
     const stats = ref({

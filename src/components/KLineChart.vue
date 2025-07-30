@@ -600,16 +600,16 @@ export default {
         },
         crosshair: {
           mode: 0, // 正常十字线模式
-          vertLine: {
-            width: 1,
-            color: 'rgba(255, 255, 255, 0.5)',
-            style: 0, // 实线
-          },
-          horzLine: {
-            width: 1,
-            color: 'rgba(255, 255, 255, 0.5)',
-            style: 0, // 实线
-          },
+          // vertLine: {
+          //   width: 1,
+          //   color: 'rgba(255, 255, 255, 0.5)',
+          //   style: 0, // 实线
+          // },
+          // horzLine: {
+          //   width: 1,
+          //   color: 'rgba(255, 255, 255, 0.5)',
+          //   style: 0, // 实线
+          // },
         },
         rightPriceScale: {
           borderColor: '#485c7b',
@@ -658,16 +658,16 @@ export default {
         },
         crosshair: {
           mode: 0, // 正常十字线模式
-          vertLine: {
-            width: 1,
-            color: 'rgba(255, 255, 255, 0.5)',
-            style: 0, // 实线
-          },
-          horzLine: {
-            width: 1,
-            color: 'rgba(255, 255, 255, 0.5)',
-            style: 0, // 实线
-          },
+          // vertLine: {
+          //   width: 1,
+          //   color: 'rgba(255, 255, 255, 0.5)',
+          //   style: 0, // 实线
+          // },
+          // horzLine: {
+          //   width: 1,
+          //   color: 'rgba(255, 255, 255, 0.5)',
+          //   style: 0, // 实线
+          // },
         },
         rightPriceScale: {
           borderColor: '#485c7b',
