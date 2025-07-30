@@ -55,9 +55,8 @@
     <!-- 主K线图 -->
     <div ref="mainChartContainer" class="main-chart-container"></div>
 
-    <!-- 成交量图 -->
-    <div ref="volumeChartContainer" class="volume-chart-container">
-      <!-- 成交量信息面板 -->
+    <!-- 成交量信息面板 - 独立区域 -->
+    <div class="volume-info-section">
       <div class="volume-info-panel">
         <div class="volume-info">
           <span class="volume-label">Vol(BTC):</span>
@@ -71,6 +70,9 @@
         </div>
       </div>
     </div>
+
+    <!-- 成交量图 -->
+    <div ref="volumeChartContainer" class="volume-chart-container"></div>
   </div>
 </template>
 
@@ -79,7 +81,7 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { createChart } from 'lightweight-charts'
 import { chartEventBus } from '@/utils/chartEventBus'
 import moment from 'moment'
-import { formatVolume, formatVolumeValue } from '@/utils/formatters'
+import { formatVolume, formatVolumeValue, calculatePriceFormat } from '@/utils/formatters'
 
 export default {
   name: 'KLineChart',
@@ -913,47 +915,6 @@ export default {
     }
 
 
-
-    // 根据价格范围动态计算价格格式
-    const calculatePriceFormat = (samplePrice) => {
-      if (samplePrice >= 10000) {
-        // 高价币种 (BTC等): 价格 >= 10000
-        return {
-          type: 'price',
-          precision: 2,
-          minMove: 0.01
-        }
-      } else if (samplePrice >= 1) {
-        // 中价币种 (ETH, BNB等): 1 <= 价格 < 10000
-        return {
-          type: 'price',
-          precision: 2,
-          minMove: 0.01
-        }
-      } else if (samplePrice >= 0.1) {
-        // 低价币种: 0.1 <= 价格 < 1
-        return {
-          type: 'price',
-          precision: 4,
-          minMove: 0.0001
-        }
-      } else if (samplePrice >= 0.01) {
-        // 极低价币种: 0.01 <= 价格 < 0.1
-        return {
-          type: 'price',
-          precision: 5,
-          minMove: 0.00001
-        }
-      } else {
-        // 超低价币种: 价格 < 0.01
-        return {
-          type: 'price',
-          precision: 6,
-          minMove: 0.000001
-        }
-      }
-    }
-
     // ResizeObserver实例，需要在组件卸载时清理
     let priceScaleResizeObserver = null
 
@@ -1087,14 +1048,15 @@ export default {
 
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import '@/styles/chart-variables.less';
 .mobile-kline-container {
   position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #1a1a1a;
+  background: @bg-primary;
   overflow: hidden;
 }
 
@@ -1103,93 +1065,93 @@ export default {
   position: absolute;
   top: 8px;
   left: 8px;
-  z-index: 10;
-  background: rgba(26, 26, 26, 0.8);
-  border-radius: 4px;
-  padding: 6px 10px;
+  z-index: @z-index-panel;
+  background: @bg-panel;
+  border-radius: @border-radius;
+  padding: @panel-padding;
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid @border-light;
 }
 
 /* 价格信息面板 - 跟随十字线位置 */
 .price-info-panel {
   position: absolute;
   top: 8px;
-  z-index: 10;
+  z-index: @z-index-panel;
   background: rgba(26, 26, 26, 0.9);
-  border-radius: 6px;
-  padding: 8px 12px;
+  border-radius: @border-radius-large;
+  padding: @panel-padding-large;
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid @border-light;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   width: 140px; /* 固定宽度，形成方形布局 */
   transition: all 0.2s ease; /* 平滑过渡动画 */
-}
 
-.price-info-panel.panel-left {
-  left: 8px;
-  right: auto;
-}
+  &.panel-left {
+    left: 8px;
+    right: auto;
+  }
 
-.price-info-panel.panel-right {
-  left: auto;
-  right: 8px;
+  &.panel-right {
+    left: auto;
+    right: 8px;
+  }
 }
 
 .price-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 11px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-}
+  gap: @gap-sm;
+  font-size: @font-size-md;
+  font-family: @font-mono;
 
-.price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-.time-info {
-  color: #FFF;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 10px;
-}
+  .time-info {
+    color: @text-white;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: @font-size-base;
+  }
 
-.change-info {
-  font-weight: 500;
-}
+  .change-info {
+    font-weight: 500;
 
-.positive {
-  color: #0ECB81;
-}
+    &.positive {
+      color: @color-green;
+    }
 
-.negative {
-  color: #F6465D;
+    &.negative {
+      color: @color-red;
+    }
+  }
 }
 
 .indicator-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: @gap-sm;
 }
 
 .indicator-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  font-size: 10px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  gap: @gap-md;
+  font-size: @font-size-base;
+  font-family: @font-mono;
 }
 
 /* 主图表容器 */
 .main-chart-container {
   flex: 7;
   min-height: 200px;
-  background: #1a1a1a;
+  background: @bg-primary;
   position: relative;
   margin-top: 40px; /* 为MA指标面板留出空间 */
 }
@@ -1198,63 +1160,79 @@ export default {
 .volume-chart-container {
   flex: 3;
   min-height: 100px;
-  background: #1a1a1a;
+  background: @bg-primary;
   position: relative;
 }
 
-/* 成交量信息面板 */
-.volume-info-panel {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  z-index: 10;
-  background: rgba(26, 26, 26, 0.8);
-  border-radius: 4px;
-  padding: 6px 10px;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.volume-info {
+/* 成交量信息区域 - 独立空间 */
+.volume-info-section {
+  height: 32px; // 给成交量信息独立的高度空间
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  font-size: 10px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  align-items: center;
+  background: @bg-primary;
+  border-top: 1px solid @border-color;
+  border-bottom: 1px solid @border-color;
 }
 
-.volume-label {
-  color: #888;
-}
+.volume-info-panel {
+  background: @bg-transparent;
+  border: none;
+  padding: @panel-padding;
+  z-index: @z-index-panel;
+  width: 100%;
 
-.volume-btc,
-.volume-usdt,
-.volume-buy,
-.volume-sell {
-  color: #fff;
-  font-weight: 500;
+  .volume-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: @gap-base @gap-lg;
+    font-size: @font-size-base;
+    font-family: @font-mono;
+  }
+
+  .volume-label {
+    color: @text-muted;
+  }
+
+  .volume-btc {
+    color: @color-orange;
+    font-weight: 500;
+  }
+
+  .volume-usdt {
+    color: @color-blue;
+    font-weight: 500;
+  }
+
+  .volume-buy {
+    color: @color-green;
+    font-weight: 500;
+  }
+
+  .volume-sell {
+    color: @color-red;
+    font-weight: 500;
+  }
 }
 
 /* 移动端适配 */
-@media (max-width: 768px) {
+@media (max-width: @mobile-max) {
   .price-info {
-    font-size: 10px;
-    gap: 6px 8px;
-  }
+    font-size: @font-size-base;
+    gap: @gap-base @gap-md;
 
-  .time-info {
-    font-size: 9px;
+    .time-info {
+      font-size: @font-size-sm;
+    }
   }
 
   .indicator-group {
-    font-size: 9px;
-    gap: 6px;
+    font-size: @font-size-sm;
+    gap: @gap-base;
   }
 
   .volume-info {
-    font-size: 9px;
-    gap: 4px 8px;
+    font-size: @font-size-sm;
+    gap: @gap-sm @gap-md;
   }
 
   .main-chart-container {
@@ -1265,31 +1243,31 @@ export default {
 /* 超小屏幕适配 */
 @media (max-width: 480px) {
   .price-info-panel {
-    padding: 6px 8px;
+    padding: @gap-base @gap-md;
   }
 
   .price-info {
-    font-size: 9px;
-    gap: 4px 6px;
-  }
+    font-size: @font-size-sm;
+    gap: @gap-sm @gap-base;
 
-  .time-info {
-    font-size: 8px;
-    padding: 1px 4px;
+    .time-info {
+      font-size: @font-size-xs;
+      padding: 1px 4px;
+    }
   }
 
   .indicator-group {
-    font-size: 8px;
-    gap: 4px;
+    font-size: @font-size-xs;
+    gap: @gap-sm;
   }
 
   .volume-info-panel {
-    padding: 4px 6px;
+    padding: @gap-sm @gap-base;
   }
 
   .volume-info {
-    font-size: 8px;
-    gap: 3px 6px;
+    font-size: @font-size-xs;
+    gap: @gap-xs @gap-base;
   }
 
   .main-chart-container {

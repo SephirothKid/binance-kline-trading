@@ -1,9 +1,4 @@
 /**
- * 通用格式化工具函数
- * 统一管理所有格式化相关的方法
- */
-
-/**
  * 格式化价格显示
  * @param {number} price - 价格数值
  * @param {number} minFractionDigits - 最小小数位数，默认2
@@ -213,4 +208,48 @@ export const formatCompactNumber = (num, precision = 2) => {
   }
   
   return num.toFixed(precision)
+}
+
+/**
+ * 根据价格范围动态计算价格格式
+ * @param {number} samplePrice - 样本价格
+ * @returns {object} 价格格式配置
+ */
+export const calculatePriceFormat = (samplePrice) => {
+  if (samplePrice >= 10000) {
+    // 高价币种 (BTC等): 价格 >= 10000
+    return {
+      type: 'price',
+      precision: 2,
+      minMove: 0.01
+    }
+  } else if (samplePrice >= 1) {
+    // 中价币种 (ETH, BNB等): 1 <= 价格 < 10000
+    return {
+      type: 'price',
+      precision: 2,
+      minMove: 0.01
+    }
+  } else if (samplePrice >= 0.1) {
+    // 低价币种: 0.1 <= 价格 < 1
+    return {
+      type: 'price',
+      precision: 4,
+      minMove: 0.0001
+    }
+  } else if (samplePrice >= 0.01) {
+    // 极低价币种: 0.01 <= 价格 < 0.1
+    return {
+      type: 'price',
+      precision: 5,
+      minMove: 0.00001
+    }
+  } else {
+    // 超低价币种: 价格 < 0.01
+    return {
+      type: 'price',
+      precision: 6,
+      minMove: 0.000001
+    }
+  }
 }

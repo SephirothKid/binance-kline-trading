@@ -49,8 +49,6 @@
           <span class="volume-sell">{{ volumeInfo.sellVolume }}</span>
         </div>
       </div>
-
-
     </div>
   </div>
 </template>
@@ -60,7 +58,7 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { createChart } from 'lightweight-charts'
 import { chartEventBus } from '@/utils/chartEventBus'
 import moment from 'moment'
-import { formatVolume, formatVolumeValue } from '@/utils/formatters'
+import { formatVolume, formatVolumeValue, calculatePriceFormat } from '@/utils/formatters'
 
 export default {
   name: 'DesktopKLineChart',
@@ -827,48 +825,6 @@ export default {
       }
     }
 
-
-
-    // 根据价格范围动态计算价格格式
-    const calculatePriceFormat = (samplePrice) => {
-      if (samplePrice >= 10000) {
-        // 高价币种 (BTC等): 价格 >= 10000
-        return {
-          type: 'price',
-          precision: 2,
-          minMove: 0.01
-        }
-      } else if (samplePrice >= 1) {
-        // 中价币种 (ETH, BNB等): 1 <= 价格 < 10000
-        return {
-          type: 'price',
-          precision: 2,
-          minMove: 0.01
-        }
-      } else if (samplePrice >= 0.1) {
-        // 低价币种: 0.1 <= 价格 < 1
-        return {
-          type: 'price',
-          precision: 4,
-          minMove: 0.0001
-        }
-      } else if (samplePrice >= 0.01) {
-        // 极低价币种: 0.01 <= 价格 < 0.1
-        return {
-          type: 'price',
-          precision: 5,
-          minMove: 0.00001
-        }
-      } else {
-        // 超低价币种: 价格 < 0.01
-        return {
-          type: 'price',
-          precision: 6,
-          minMove: 0.000001
-        }
-      }
-    }
-
     // ResizeObserver实例，需要在组件卸载时清理
     let priceScaleResizeObserver = null
 
@@ -956,20 +912,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-// 颜色变量
-@bg-primary: #1a1a1a;
-@bg-panel: rgba(26, 26, 26, 0.7);
-@border-color: #2B2B43;
-@text-primary: #d1d4dc;
-@text-white: #FFF;
-@text-muted: #888;
-@color-green: #0ECB81;
-@color-red: #F6465D;
-@color-orange: #FF6B35;
-@color-blue: #2196F3;
-
-// 字体变量
-@font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+@import '@/styles/chart-variables.less';
 
 .desktop-kline-container {
   width: 100%;
