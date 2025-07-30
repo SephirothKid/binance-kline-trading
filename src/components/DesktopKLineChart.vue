@@ -4,14 +4,14 @@
     <div class="price-info-panel">
       <div class="price-info">
         <span class="time-info">{{ currentTime }}</span>
-        <span>开: <span :class="['change-info', priceInfo.change >= 0 ? 'positive' : 'negative']">{{ priceInfo.open }}</span></span>
-        <span>高: <span :class="['change-info', priceInfo.change >= 0 ? 'positive' : 'negative']">{{ priceInfo.high }}</span></span>
-        <span>低: <span :class="['change-info', priceInfo.change >= 0 ? 'positive' : 'negative']">{{ priceInfo.low }}</span></span>
-        <span>收: <span :class="['change-info', priceInfo.change >= 0 ? 'positive' : 'negative']">{{ priceInfo.close }}</span></span>
-        <span :class="['change-info', priceInfo.change >= 0 ? 'positive' : 'negative']">
-          涨跌幅: <span :class="['change-info', priceInfo.change >= 0 ? 'positive' : 'negative']">{{ priceInfo.change >= 0 ? '+' : '' }}{{ priceInfo.changePercent }}%</span>
+        <span>开: <span :class="['change-info', isPositive ? 'positive' : 'negative']">{{ priceInfo.open }}</span></span>
+        <span>高: <span :class="['change-info', isPositive ? 'positive' : 'negative']">{{ priceInfo.high }}</span></span>
+        <span>低: <span :class="['change-info', isPositive ? 'positive' : 'negative']">{{ priceInfo.low }}</span></span>
+        <span>收: <span :class="['change-info', isPositive ? 'positive' : 'negative']">{{ priceInfo.close }}</span></span>
+        <span :class="['change-info', isPositive ? 'positive' : 'negative']">
+          涨跌幅: <span :class="['change-info', isPositive ? 'positive' : 'negative']">{{ isPositive ? '+' : '' }}{{ priceInfo.changePercent }}%</span>
         </span>
-        <span>振幅: <span :class="['change-info', priceInfo.change >= 0 ? 'positive' : 'negative']">{{ priceInfo.amplitude }}%</span></span>
+        <span>振幅: <span :class="['change-info', isPositive ? 'positive' : 'negative']">{{ priceInfo.amplitude }}%</span></span>
       </div>
       <div class="indicator-info">
         <div v-if="showMA" class="indicator-group">
@@ -57,6 +57,7 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { createChart } from 'lightweight-charts'
 import { chartEventBus } from '@/utils/chartEventBus'
+import klineDataService from '@/services/klineDataService'
 import moment from 'moment'
 import { formatVolume, formatVolumeValue, calculatePriceFormat } from '@/utils/formatters'
 
@@ -96,14 +97,29 @@ export default {
     // 当前时间
     const currentTime = ref(moment().format('YYYY/MM/DD HH:mm'))
 
-    // WebSocket连接
-    let websocket = null
+    // WebSocket回调处理函数
+    const handleWebSocketData = (data) => {
+      if (!candlestickSeries || !volumeSeries) {
+        console.warn('⚠️ 图表系列未初始化，跳过WebSocket数据更新')
+        return
+      }
 
-    // 计算成交量移动平均线
-    const calculateVolumeMA = (volumeData, period) => {
-      if (volumeData.length < period) return 0
-      const sum = volumeData.slice(-period).reduce((acc, item) => acc + item.value, 0)
-      return sum / period
+      try {
+        // console.log('📈 收到WebSocket实时数据:', {
+        //   time: new Date(data.klineData.time * 1000).toLocaleTimeString(),
+        //   price: data.klineData.close || data.klineData.value,
+        //   volume: data.volumeData.value
+        // })
+
+        // 更新图表数据
+        candlestickSeries.update(data.klineData)
+        volumeSeries.update(data.volumeData)
+
+        // 更新chartEventBus数据
+        chartEventBus.updateRealtimeData(data.klineData, data.volumeData)
+      } catch (error) {
+        console.error('处理WebSocket数据错误:', error)
+      }
     }
 
 
@@ -134,7 +150,7 @@ export default {
       const sellVolume = lastVolumeData.sellVolume || 0
       const quoteVolume = lastVolumeData.quoteVolume || (currentVolume * currentPrice)
 
-      const { base, quote } = getAssetFromSymbol(props.symbol)
+      const { base, quote } = klineDataService.getAssetFromSymbol(props.symbol)
 
       volumeInfo.value = {
         current: `${formatVolume(currentVolume)} ${base}`, // 显示base资产单位
@@ -154,74 +170,21 @@ export default {
     const showBOLL = computed(() => activeIndicatorsList.value.includes('BOLL'))
     const showSAR = computed(() => activeIndicatorsList.value.includes('SAR'))
 
-    // 请求真实的币安K线数据
+    const isPositive = computed(() => {
+      return priceInfo.value.change >= 0
+    })
+
+    // 获取K线数据（使用封装的服务）
     const fetchBinanceKlineData = async (symbol = 'BTCUSDT', interval = '1m', limit = 1000) => {
-      try {
-        console.log(`🔄 正在获取 ${symbol} ${interval} 数据...`)
+      const result = await klineDataService.fetchBinanceKlineData(symbol, interval, limit)
 
-        // 分时图使用1分钟数据，但显示为连续线图
-        const actualInterval = interval === 'time' ? '1m' : interval
-        const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${actualInterval}&limit=${limit}`)
-        const data = await response.json()
-
-        const klineData = []
-        const volumeData = []
-
-        data.forEach(item => {
-          const [
-            openTime,
-            open,
-            high,
-            low,
-            close,
-            volume,
-            closeTime,
-            quoteAssetVolume,
-            count,
-            takerBuyBaseAssetVolume,
-            takerBuyQuoteAssetVolume
-          ] = item
-
-          const time = Math.floor(openTime / 1000) // 转换为秒级时间戳
-
-          // 如果是分时图，转换为线图数据
-          if (interval === 'time') {
-            klineData.push({
-              time: time,
-              value: Number(close) // 分时图只需要价格
-            })
-          } else {
-            klineData.push({
-              time: time,
-              open: Number(open),
-              high: Number(high),
-              low: Number(low),
-              close: Number(close)
-            })
-          }
-
-          // 计算真实的买入/卖出量 (单位: base asset，如BTCUSDT中的BTC)
-          const totalVolume = Number(volume)
-          const buyVolume = Number(takerBuyBaseAssetVolume) // 主动买入量 (base asset)
-          const sellVolume = totalVolume - buyVolume // 卖出量 = 总量 - 买入量 (base asset)
-
-          volumeData.push({
-            time: time,
-            value: totalVolume,
-            buyVolume: buyVolume,
-            sellVolume: sellVolume,
-            quoteVolume: Number(quoteAssetVolume), // 成交额
-            color: Number(close) >= Number(open) ? '#0ECB81' : '#F6465D'
-          })
-        })
-
-        console.log(`${symbol} ${interval} 数据获取成功:`, klineData.length, '条')
-        return { klineData, volumeData, isTimeSeries: interval === 'time' }
-      } catch (error) {
-        console.error('❌ 币安数据获取失败:', error)
-        // 如果API失败，返回备用测试数据
+      // 如果服务返回空数据，使用备用数据
+      if (result.klineData.length === 0) {
+        console.log('📦 使用备用测试数据')
         return createFallbackData(interval)
       }
+
+      return result
     }
 
     // 备用测试数据（API失败时使用）
@@ -378,98 +341,12 @@ export default {
 
     // 建立WebSocket连接获取实时数据
     const connectWebSocket = (symbol = 'BTCUSDT', interval = '1m') => {
-      if (websocket) {
-        websocket.close()
-      }
-
-      const wsSymbol = symbol.toLowerCase()
-      // 分时图使用1分钟WebSocket数据
-      const actualInterval = interval === 'time' ? '1m' : interval
-      const wsUrl = `wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${actualInterval}`
-
-      console.log('连接WebSocket:', wsUrl)
-
-      websocket = new WebSocket(wsUrl)
-
-      websocket.onopen = () => {
-        console.log('WebSocket连接成功')
-      }
-
-      websocket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          const kline = data.k
-
-          if (kline && candlestickSeries && volumeSeries) {
-            const isTimeSeries = props.interval === 'time'
-
-            // 根据图表类型更新数据
-            let newKlineData
-            if (isTimeSeries) {
-              // 分时图：只需要价格值
-              newKlineData = {
-                time: Math.floor(kline.t / 1000), // 转换为秒
-                value: parseFloat(kline.c) // 分时图使用收盘价作为当前价格
-              }
-            } else {
-              // K线图：需要OHLC数据
-              newKlineData = {
-                time: Math.floor(kline.t / 1000), // 转换为秒
-                open: parseFloat(kline.o),
-                high: parseFloat(kline.h),
-                low: parseFloat(kline.l),
-                close: parseFloat(kline.c)
-              }
-            }
-
-            // 更新成交量数据 - 使用真实买入/卖出量 (单位: base asset)
-            const totalVolume = parseFloat(kline.v)
-            const buyVolume = parseFloat(kline.V) // 主动买入量 (base asset)
-            const sellVolume = totalVolume - buyVolume // 卖出量 (base asset)
-
-            const newVolumeData = {
-              time: Math.floor(kline.t / 1000),
-              value: totalVolume,
-              buyVolume: buyVolume,
-              sellVolume: sellVolume,
-              quoteVolume: parseFloat(kline.q), // 成交额
-              color: parseFloat(kline.c) >= parseFloat(kline.o) ? '#0ECB81' : '#F6465D'
-            }
-
-            // 更新图表数据
-            candlestickSeries.update(newKlineData)
-            volumeSeries.update(newVolumeData)
-
-            // 更新chartEventBus数据
-            chartEventBus.updateRealtimeData(newKlineData, newVolumeData)
-
-            // console.log('实时数据更新:', {
-            //   time: new Date(kline.t).toLocaleTimeString(),
-            //   price: newKlineData.close,
-            //   volume: newVolumeData.value
-            // })
-          }
-        } catch (error) {
-          console.error('WebSocket数据解析错误:', error)
-        }
-      }
-
-      websocket.onerror = (error) => {
-        console.error('WebSocket连接错误:', error)
-      }
-
-      websocket.onclose = () => {
-        console.log('WebSocket连接关闭')
-      }
+      klineDataService.connectWebSocket(symbol, interval, handleWebSocketData)
     }
 
     // 断开WebSocket连接
     const disconnectWebSocket = () => {
-      if (websocket) {
-        websocket.close()
-        websocket = null
-        console.log('🔌 WebSocket连接已断开')
-      }
+      klineDataService.unsubscribe(handleWebSocketData)
     }
 
     const initChart = async () => {
@@ -899,6 +776,7 @@ export default {
       mainChartContainer,
       volumeChartContainer,
       priceInfo,
+      isPositive,
       indicatorInfo,
       volumeInfo,
       currentTime,
