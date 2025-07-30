@@ -60,6 +60,7 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { createChart } from 'lightweight-charts'
 import { chartEventBus } from '@/utils/chartEventBus'
 import moment from 'moment'
+import { formatVolume, formatVolumeValue } from '@/utils/formatters'
 
 export default {
   name: 'DesktopKLineChart',
@@ -107,15 +108,7 @@ export default {
       return sum / period
     }
 
-    // 格式化成交量显示
-    const formatVolume = (volume) => {
-      if (volume >= 1000000) {
-        return (volume / 1000000).toFixed(2) + 'M'
-      } else if (volume >= 1000) {
-        return (volume / 1000).toFixed(2) + 'K'
-      }
-      return volume.toFixed(2)
-    }
+
 
     // 从交易对中提取base和quote资产
     const getAssetFromSymbol = (symbol) => {
@@ -834,26 +827,7 @@ export default {
       }
     }
 
-    // 成交量格式化函数
-    const formatVolumeValue = (value) => {
-      if (value === 0) return '0'
 
-      const absValue = Math.abs(value)
-
-      if (absValue >= 1000000000) {
-        // 十亿以上显示为 B
-        return (value / 1000000000).toFixed(2) + 'B'
-      } else if (absValue >= 1000000) {
-        // 百万以上显示为 M
-        return (value / 1000000).toFixed(2) + 'M'
-      } else if (absValue >= 1000) {
-        // 千以上显示为 K
-        return (value / 1000).toFixed(2) + 'K'
-      } else {
-        // 小于1000直接显示
-        return value.toFixed(2)
-      }
-    }
 
     // 根据价格范围动态计算价格格式
     const calculatePriceFormat = (samplePrice) => {

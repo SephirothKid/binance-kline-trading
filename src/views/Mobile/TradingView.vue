@@ -120,6 +120,7 @@ import KLineChart from '@/components/KLineChart.vue'
 import { chartEventBus } from '@/utils/chartEventBus'
 import SymbolSelector from '@/components/SymbolSelector.vue'
 import binanceApi from '@/utils/binanceApi'
+import { formatPrice, formatPercent, formatVolume, getPriceChangeClass } from '@/utils/formatters'
 
 export default {
   name: 'MobileTradingView',
@@ -148,9 +149,7 @@ export default {
     })
 
     const priceChangeClass = computed(() => {
-      if (stats.value.priceChange > 0) return 'text-trading-green'
-      if (stats.value.priceChange < 0) return 'text-trading-red'
-      return 'text-trading-text'
+      return getPriceChangeClass(stats.value.priceChange)
     })
 
     const mobileTimeframes = [
@@ -164,40 +163,6 @@ export default {
     ]
 
     const quickIndicators = ['MA', 'EMA', 'WMA', 'BOLL', 'VWAP', 'AVL', 'TRIX', 'SAR']
-
-    const formatPrice = (price) => {
-      if (!price) return '0.00'
-      return price.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const formatChange = (change) => {
-      if (!change) return '0.00'
-      const sign = change > 0 ? '+' : ''
-      return sign + change.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const formatPercent = (percent) => {
-      if (!percent) return '0.00%'
-      const sign = percent > 0 ? '+' : ''
-      return sign + percent.toFixed(2) + '%'
-    }
-
-    const formatVolume = (volume) => {
-      if (!volume) return '0'
-      if (volume >= 1000000) {
-        return (volume / 1000000).toFixed(2) + 'M'
-      }
-      if (volume >= 1000) {
-        return (volume / 1000).toFixed(2) + 'K'
-      }
-      return volume.toFixed(2)
-    }
 
     const selectTimeframe = (timeframe) => {
       selectedInterval.value = timeframe
@@ -275,7 +240,6 @@ export default {
       mobileTimeframes,
       quickIndicators,
       formatPrice,
-      formatChange,
       formatPercent,
       formatVolume,
       selectTimeframe,

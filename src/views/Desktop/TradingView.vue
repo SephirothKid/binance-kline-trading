@@ -192,6 +192,7 @@ import DesktopKLineChart from '@/components/DesktopKLineChart.vue'
 import TimeframeSelector from '@/components/TimeframeSelector.vue'
 import binanceApi from '@/utils/binanceApi'
 import { chartEventBus } from '@/utils/chartEventBus'
+import { formatPrice, formatChange, formatPercent, formatVolume, formatSymbol, formatTime, getPriceChangeClass } from '@/utils/formatters'
 
 export default {
   name: 'DesktopTradingView',
@@ -239,9 +240,7 @@ export default {
     })
 
     const priceChangeClass = computed(() => {
-      if (stats.value.priceChange > 0) return 'text-trading-green'
-      if (stats.value.priceChange < 0) return 'text-trading-red'
-      return 'text-trading-text'
+      return getPriceChangeClass(stats.value.priceChange)
     })
 
     const filteredSymbols = computed(() => {
@@ -253,47 +252,6 @@ export default {
         symbol.name.toLowerCase().includes(query)
       )
     })
-
-    const formatPrice = (price) => {
-      if (!price) return '0.00'
-      if (price < 1) {
-        return price.toFixed(4)
-      }
-      return price.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const formatChange = (change) => {
-      if (!change) return '0.00'
-      const sign = change > 0 ? '+' : ''
-      return sign + change.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const formatPercent = (percent) => {
-      if (!percent) return '0.00%'
-      const sign = percent > 0 ? '+' : ''
-      return sign + percent.toFixed(2) + '%'
-    }
-
-    const formatVolume = (volume) => {
-      if (!volume) return '0'
-      if (volume >= 1000000) {
-        return (volume / 1000000).toFixed(2) + 'M'
-      }
-      if (volume >= 1000) {
-        return (volume / 1000).toFixed(2) + 'K'
-      }
-      return volume.toFixed(2)
-    }
-
-    const formatSymbol = (symbol) => {
-      return symbol.replace('USDT', '/USDT')
-    }
 
     const getSymbolName = (symbol) => {
       const symbolData = symbols.value.find(s => s.symbol === symbol)
@@ -376,16 +334,7 @@ export default {
       }
     }
 
-    const formatTime = (timestamp) => {
-      if (!timestamp) return ''
-      const date = new Date(timestamp * 1000)
-      return date.toLocaleTimeString('zh-CN', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      })
-    }
+
 
     const load24hrStats = async () => {
       try {

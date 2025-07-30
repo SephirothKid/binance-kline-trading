@@ -89,6 +89,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { formatSymbol, formatPrice, formatPercent } from '@/utils/formatters'
 
 export default {
   name: 'SymbolSelector',
@@ -140,24 +141,7 @@ export default {
       closeDropdown()
     }
 
-    const formatSymbol = (symbol) => {
-      return symbol.replace('USDT', '/USDT')
-    }
 
-    const formatPrice = (price) => {
-      if (price < 1) {
-        return price.toFixed(4)
-      }
-      return price.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const formatPercent = (percent) => {
-      const sign = percent >= 0 ? '+' : ''
-      return sign + percent.toFixed(2) + '%'
-    }
 
     // 点击外部关闭下拉菜单
     const handleClickOutside = (event) => {

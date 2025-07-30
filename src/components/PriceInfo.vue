@@ -82,6 +82,7 @@
 
 <script>
 import { computed } from 'vue'
+import { formatPrice, formatChange, formatPercent, formatVolume, getPriceChangeClass } from '@/utils/formatters'
 
 export default {
   name: 'PriceInfo',
@@ -129,44 +130,8 @@ export default {
     })
 
     const priceChangeClass = computed(() => {
-      if (props.priceChange > 0) return 'text-trading-green'
-      if (props.priceChange < 0) return 'text-trading-red'
-      return 'text-trading-text'
+      return getPriceChangeClass(props.priceChange)
     })
-
-    const formatPrice = (price) => {
-      if (!price) return '0.00'
-      return price.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const formatChange = (change) => {
-      if (!change) return '0.00'
-      const sign = change > 0 ? '+' : ''
-      return sign + change.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const formatPercent = (percent) => {
-      if (!percent) return '0.00%'
-      const sign = percent > 0 ? '+' : ''
-      return sign + percent.toFixed(2) + '%'
-    }
-
-    const formatVolume = (volume) => {
-      if (!volume) return '0'
-      if (volume >= 1000000) {
-        return (volume / 1000000).toFixed(2) + 'M'
-      }
-      if (volume >= 1000) {
-        return (volume / 1000).toFixed(2) + 'K'
-      }
-      return volume.toFixed(2)
-    }
 
     return {
       baseCurrency,
