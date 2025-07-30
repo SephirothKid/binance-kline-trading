@@ -70,11 +70,11 @@
     </div>
 
     <!-- K线图 -->
-    <div class="mx-2 mb-4 trading-card" style="height: 400px;">
+    <div class="mx-2 mb-4 trading-card" style="height: 430px;">
       <KLineChart
         :symbol="currentSymbol"
         :interval="selectedInterval"
-        :height="400"
+        :height="430"
       />
     </div>
 
